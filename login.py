@@ -3,59 +3,42 @@ import pyppeteer
 import time
 import random
 from cred import USERNAME, PASSWORD
+from vendor_list import vendor_dict
+from core import browser
+import requests
+
+TAOBAO_URL = "https://login.taobao.com"
 
 
-class Login:
+class Taobao:
+    def __init__(self, url, session):
+        self.url = url
+        self.session = session
+        self.page = session.page
 
-    pyppeteer.DEBUG = True
-    # page = None
-    options_dict = {
-        "headless": False,
-        "args": [
-            '--window-size={1300},{600}'
-            '--disable-extensions',
-            '--hide-scrollbars',
-            '--disable-bundled-ppapi-flash',
-            '--mute-audio',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-gpu',
-            '--disable-infobars'
-        ],
-        "dumpio": True,
-        "autoClose": False
-    }
+    # async def _injection_js(self, page):
+    #     """注入js
+    #     """
+    #     await page.evaluateOnNewDocument('() =>{ Object.defineProperties(navigator,'
+    #                                      '{ webdriver:{ get: () => false } }) }')
+    async def evaluate(self, func, *params):
+        res = await self.page.evaluate(func, *params)
+        return res
 
-    # async def _injection_js(self):
-    # """
-    # change webdriver value to bypass anti-crawler detection
-    # """
-    # await self.page.evaluateOnNewDocument('() =>{ Object.defineProperties(navigator,'
-    #                                   '{ webdriver:{ get: () => false } }) }')
+    async def get_elem(self, selector: str) -> str:
+        return await self.page.querySelector(selector)
 
-    async def _init(self, options=options_dict):
-        """
-        init the pyppeteer instance
-        """
-        self.browser = await pyppeteer.launch(**options)
-        self.page = await self.browser.newPage()
-
-    async def main(self, username=USERNAME, password=PASSWORD):
-        # browser = await pyppeteer.launch(headless = False)
-        # page = await browser.newPage()
-        # await page.goto("https://login.taobao.com")
-        # input("what ever")
-        # await browser.close()
+    async def login(self, username=USERNAME, password=PASSWORD):
         """
         :param username
         :param password
         """
-        await self._init()
-        # await self._injection_js()
-        await self.page.goto("https://login.taobao.com")
+        # await self._injection_js(page)
+        await self.page.goto(self.url, timeout=10000000)
+
         await self.page.click("form.login-form")
         time.sleep(random.random()*2)
-        print(random.random()*2)
+
         await self.page.type("#fm-login-id", username, {"delay": random.randint(100, 150)})
         await self.page.type("#fm-login-password", password, {"delay": random.randint(100, 150)})
         time.sleep(random.random()*2)
@@ -80,12 +63,29 @@ class Login:
             else:
                 await asyncio.sleep(800)
 
-        # await self.browser.close()
+    async def check_price(self, product_url):
+        """
+        :param product_url --> string
+        """
+
+    async def check_products(self, product_name, product_cat):
+        """
+        :param product_name --> string
+        :param product_cat --> string, match vendor_list key
+        """
+        ele = await self.get_elem('#browsercontext-class > dl > dd')
+        p = await ele.querySelectorAllEval('p', 'nodes => nodes.map(n=>n.innerHTML)')
 
 
 if __name__ == "__main__":
-    login = Login()
     # loop = asyncio.get_event_loop()
     # task = asyncio.ensure_future(login.main())
     # loop.run_until_complete(task)
-    asyncio.run(login.main())
+
+    async def main():
+        async with browser.PageSession() as page_session:
+            taobao = Taobao(TAOBAO_URL, page_session)
+            await taobao.login()
+            # final_html = await page_session.page.content()
+
+    asyncio.run(main())

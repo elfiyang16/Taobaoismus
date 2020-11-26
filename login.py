@@ -21,12 +21,44 @@ class Taobao:
     #     """
     #     await page.evaluateOnNewDocument('() =>{ Object.defineProperties(navigator,'
     #                                      '{ webdriver:{ get: () => false } }) }')
+    async def mouse_slider(self):
+        """
+        :return: None if fail Or True if succeed
+        """
+        await asyncio.sleep(3)
+        try:
+            await self.page.hover('#nc_1_n1z')
+            await self.page.mouse.down()
+            await self.page.mouse.move(1000, 0, {'steps': 30})
+            await self.page.mouse.up()
+            print("slider shows")
+
+            await asyncio.sleep(2)
+        except Exception as e:
+            print(e, '     :slider login error')
+            return None
+        else:
+            await asyncio.sleep(3)
+            ua = await self.page.evaluate('navigator.webdriver')
+            print(ua)
+            await self.page.screenshot({'path': './headless-slide-result.png'})
+            slider_again = await self.page.querySelectorEval('#nc_1__scale_text', 'node => node.textContent')
+            if slider_again != '验证通过':
+                return None
+            else:
+                await self.page.screenshot({'path': './headless-slide-result.png'})
+                print('Authentication pass')
+                return True
+
     async def evaluate(self, func, *params):
         res = await self.page.evaluate(func, *params)
         return res
 
     async def get_elem(self, selector: str) -> str:
         return await self.page.querySelector(selector)
+
+    async def get_elems(self, selector: str) -> list:
+        return await self.page.querySelectorAll(selector)
 
     async def login(self, username=USERNAME, password=PASSWORD):
         """
@@ -60,21 +92,80 @@ class Taobao:
         finally:
             if error:
                 print("username or password wrong")
-            else:
-                await asyncio.sleep(800)
+            # else:
+            #     await asyncio.sleep(800)
+
+    # async def find_vendor(self,  vendor_key: str, vendor_dict=vendor_dict):
+    #     vendor_list = vendor_dict[vendor_key]
+    #     for vendor in vendor_list:
+    #         # Grab a list of products for this vendor category
+    #         # that date not match or starred
+    #         product_lists =
 
     async def check_price(self, product_url):
         """
         :param product_url --> string
+        : qualified_sale: 30
         """
+        QUALIFIED_SALE = 30
+
+        await self.page.goto(product_url, timeout=10000000)
+        await asyncio.sleep(3)
+
+        # CHECK SLIDER
+        slider = None
+        try:
+            slider = await self.page.querySelectorEval('#nocaptcha', 'node => node.style')
+            print(slider)
+
+            if slider:
+                print('Authentication required')
+                flag = await self.mouse_slider()
+                if not flag:
+                    print('Authentication failed')
+                    return None
+                time.sleep(random.random() + 0.5)
+                print("evalutae 3")
+                await asyncio.sleep(10)
+            else:
+                print('No authentication required')
+                pass
+        except:
+            pass
+
+        prod_title = await self.get_elem('div.tb-detail-hd > h1')
+        prod_title_text = await self.page.evaluate('''(element) => element.textContent''', prod_title)
+        print(prod_title_text)
+
+        prod_sale_count = await self.get_elem("#J_DetailMeta > div.tm-clear > div.tb-property > div > ul > li.tm-ind-item.tm-ind-sellCount > div > span.tm-count")
+        print(prod_sale_count)
+
+        prod_sale_count_text = await self.page.evaluate('''(element) => element.textContent''', prod_sale_count)
+        print(prod_sale_count_text)
+        if int(prod_sale_count_text) < QUALIFIED_SALE:
+            raise Exception(f"{prod_sale_count_text} is below qualified sale")
+
+        # prod_sku_wrapper = await self.get_elem('div.tb-sku > dl.tb-prop.tm-sale-prop.tm-clear')
+        # prod_categories = await self.get_elems('div.tb-sku > dl.tb-prop.tm-sale-prop.tm-clear > dt.tb-metatit')
+        prod_categories = await self.get_elems("#J_DetailMeta > div.tm-clear > div.tb-property > div > div.tb-key > div > div > dl.tb-prop.tm-sale-prop.tm-clear > dt")
+
+        print(prod_categories)
+        prod_categories_text = [self.evaluate(
+            '''(element) => element.textContent''', cate) for cate in prod_categories]
+        print(prod_categories_text)
+        results = await asyncio.gather(*prod_categories_text, return_exceptions=True)
+        print(results)
+
+        # for cate in prod_categories:
+        #     url = await page.evaluate('link => link.href', link)
+
+        # p = await ele.querySelectorAllEval('p', 'nodes => nodes.map(n=>n.innerHTML)')
 
     async def check_products(self, product_name, product_cat):
         """
         :param product_name --> string
         :param product_cat --> string, match vendor_list key
         """
-        ele = await self.get_elem('#browsercontext-class > dl > dd')
-        p = await ele.querySelectorAllEval('p', 'nodes => nodes.map(n=>n.innerHTML)')
 
 
 if __name__ == "__main__":
@@ -82,10 +173,13 @@ if __name__ == "__main__":
     # task = asyncio.ensure_future(login.main())
     # loop.run_until_complete(task)
 
+    prod_url = "https://detail.tmall.com/item.htm?id=628686026534&ns=1&abbucket=11&skuId=4460326940308"
+
     async def main():
         async with browser.PageSession() as page_session:
             taobao = Taobao(TAOBAO_URL, page_session)
             await taobao.login()
+            await taobao.check_price(prod_url)
             # final_html = await page_session.page.content()
 
     asyncio.run(main())

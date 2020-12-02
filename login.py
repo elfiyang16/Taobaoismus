@@ -138,23 +138,51 @@ class Taobao:
         print(prod_title_text)
 
         prod_sale_count = await self.get_elem("#J_DetailMeta > div.tm-clear > div.tb-property > div > ul > li.tm-ind-item.tm-ind-sellCount > div > span.tm-count")
-        print(prod_sale_count)
+        print("prod_sale_count", prod_sale_count)
 
         prod_sale_count_text = await self.page.evaluate('''(element) => element.textContent''', prod_sale_count)
-        print(prod_sale_count_text)
+        print("prod_sale_count_text", prod_sale_count_text)
         if int(prod_sale_count_text) < QUALIFIED_SALE:
             raise Exception(f"{prod_sale_count_text} is below qualified sale")
 
-        # prod_sku_wrapper = await self.get_elem('div.tb-sku > dl.tb-prop.tm-sale-prop.tm-clear')
         # prod_categories = await self.get_elems('div.tb-sku > dl.tb-prop.tm-sale-prop.tm-clear > dt.tb-metatit')
-        prod_categories = await self.get_elems("#J_DetailMeta > div.tm-clear > div.tb-property > div > div.tb-key > div > div > dl.tb-prop.tm-sale-prop.tm-clear > dt")
+        prod_categories = await self.get_elems("#J_DetailMeta > div.tm-clear > div.tb-property > div > div.tb-key > div > div > dl.tb-prop.tm-sale-prop.tm-clear > dd > ul")
+        print("prod_categories", prod_categories)
+        prod_categories_texts = []
+        for cate in prod_categories:
+            cate_names = await cate.getProperties()
+            print("cate_names", cate_names)
+            # slider = await self.page.querySelectorEval('#nocaptcha', 'node => node.style')
+            attr = await self.page.evaluate('''el => el.getAttribute("data-property")''', cate)
+            print(attr)
 
-        print(prod_categories)
-        prod_categories_text = [self.evaluate(
-            '''(element) => element.textContent''', cate) for cate in prod_categories]
-        print(prod_categories_text)
-        results = await asyncio.gather(*prod_categories_text, return_exceptions=True)
-        print(results)
+          #  attr = await self.page.querySelectorEval("span.styleNumber", 'el => el.map(x => x.getAttribute("data-property"))');
+
+            cate_name1 = await cate.getProperty('data-property')
+            print("cate_name1", cate_name1)
+            cate_name2 = await (await cate.getProperty('data-property')).jsonValue()
+            print("cate_name2", cate_name2)
+            prod_categories_texts.append(cate_name2)
+
+        # prod_categories_text = [self.evaluate(
+        #     '''(element) => element.data-property''', cate) for cate in prod_categories]
+        # prod_categories_text = [cate.getProperty(
+        #     'data-property') for cate in prod_categories]
+        # print(prod_categories_text)
+
+        # cate_results = await asyncio.gather(*cate_results2, return_exceptions=True)
+        # cate_results = await asyncio.gather(*prod_categories_text, return_exceptions=True)
+        print("prod_categories_texts", prod_categories_texts)
+        # 【'颜色分类', '套餐类型']
+        if len(prod_categories_texts) == 0:
+            print("No category info")
+        elif '颜色分类' in prod_categories_texts and len(prod_categories_texts) == 1:
+            print("Only color category exist")
+        else:
+            print("Multiple categories exist")
+
+        # [(await cate.getProperty('data-property'))for cate in prod_categories]
+        # prod_categories_text = await (await item.getProperty('data-property')).jsonValue()
 
         # for cate in prod_categories:
         #     url = await page.evaluate('link => link.href', link)

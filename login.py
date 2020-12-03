@@ -148,13 +148,11 @@ class Taobao:
         # prod_categories = await self.get_elems('div.tb-sku > dl.tb-prop.tm-sale-prop.tm-clear > dt.tb-metatit')
         prod_categories = await self.get_elems("#J_DetailMeta > div.tm-clear > div.tb-property > div > div.tb-key > div > div > dl.tb-prop.tm-sale-prop.tm-clear > dd > ul")
         print("prod_categories", prod_categories)
+        # [<pyppeteer.element_handle.ElementHandle object at 0x10d7c5e10>, <pyppeteer.element_handle.ElementHandle object at 0x10d7c2250>]
         prod_categories_texts = []
         for cate in prod_categories:
-            cate_names = await cate.getProperties()
-            print("cate_names", cate_names)
-            # slider = await self.page.querySelectorEval('#nocaptcha', 'node => node.style')
             attr = await self.page.evaluate('''el => el.getAttribute("data-property")''', cate)
-            print(attr)
+            print(attr) #  颜色分类 套餐类型
 
           #  attr = await self.page.querySelectorEval("span.styleNumber", 'el => el.map(x => x.getAttribute("data-property"))');
 
@@ -162,7 +160,7 @@ class Taobao:
             print("cate_name1", cate_name1)
             cate_name2 = await (await cate.getProperty('data-property')).jsonValue()
             print("cate_name2", cate_name2)
-            prod_categories_texts.append(cate_name2)
+            prod_categories_texts.append(attr)
 
         # prod_categories_text = [self.evaluate(
         #     '''(element) => element.data-property''', cate) for cate in prod_categories]
@@ -178,9 +176,11 @@ class Taobao:
             print("No category info")
         elif '颜色分类' in prod_categories_texts and len(prod_categories_texts) == 1:
             print("Only color category exist")
+            
         else:
             print("Multiple categories exist")
-
+            cate_color_prods =  await self.get_elems("#J_DetailMeta > div.tm-clear > div.tb-property > div > div.tb-key > div > div > dl.tb-prop.tm-sale-prop.tm-clear > dd > ul [data-property='颜色分类']> li")
+            print("cate_color_prods", cate_color_prods)
         # [(await cate.getProperty('data-property'))for cate in prod_categories]
         # prod_categories_text = await (await item.getProperty('data-property')).jsonValue()
 

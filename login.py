@@ -179,8 +179,34 @@ class Taobao:
             
         else:
             print("Multiple categories exist")
-            cate_color_prods =  await self.get_elems("#J_DetailMeta > div.tm-clear > div.tb-property > div > div.tb-key > div > div > dl.tb-prop.tm-sale-prop.tm-clear > dd > ul [data-property='颜色分类']> li")
+            cate_color_prods =  await self.get_elems("#J_DetailMeta > div.tm-clear > div.tb-property > div > div.tb-key > div > div > dl.tb-prop.tm-sale-prop.tm-clear > dd > ul[data-property='颜色分类']> li")
             print("cate_color_prods", cate_color_prods)
+            for prod in cate_color_prods:
+                #  ==> Get product name
+                prod_title = await self.page.evaluate('''el => el.getAttribute("title")''', prod)
+                print("prod_title", prod_title)
+                #  ==> Click the product
+                await self.page.click(f"li[title='{prod_title}'] > a > span")
+
+                time.sleep(random.random()*2)
+                await self.page.screenshot({'path': f"product_{prod_title}.png"})
+                #  ==> Get the stock
+                prod_stock = await self.get_elem("#J_EmStock")
+                prod_stock_text = await self.page.evaluate('''(element) => element.textContent''', prod_stock)
+                time.sleep(random.random()*2)
+                print("prod_stock", prod_stock_text)
+                #  ==> Get the price
+                prod_price = await self.get_elem("#J_PromoPrice > dd > div > span")
+                prod_price_text = await self.page.evaluate('''(element) => element.textContent''', prod_price)
+                time.sleep(random.random()*2)
+                print("prod_price", prod_price_text)
+                #  ==> Defaults to first option in 套餐类型
+
+
+
+                 
+                
+            
         # [(await cate.getProperty('data-property'))for cate in prod_categories]
         # prod_categories_text = await (await item.getProperty('data-property')).jsonValue()
 

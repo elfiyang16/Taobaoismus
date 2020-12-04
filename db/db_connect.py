@@ -80,6 +80,7 @@ class Database:
               print("PostgreSQL connection is closed")
 
     def select_rows(self):
+      """Run a SQL query to select rows from table."""
       self.open_connection()
       with self.conn.cursor() as cur:
         cur.execute(query)
@@ -87,7 +88,25 @@ class Database:
         cur.close()
         return records
       
-
+    def select_rows_dict_cursor(self, query):
+      """Run SELECT query and return dictionaries."""
+      self.connect()
+      with self.conn.cursor(cursor_factory=DictCursor) as cur:
+          cur.execute(query)
+          records = cur.fetchall()
+      cur.close()
+      return records
+      
+    def update_rows(self, query):
+      """Run a SQL query to update rows in table."""
+      self.connect()
+      with self.conn.cursor() as cur:
+          cur.execute(query)
+          self.conn.commit()
+          cur.close()
+          return f"{cur.rowcount} rows affected."
+        
+          
 if __name__ == '__main__': 
   db = Database()
   db.connect()

@@ -42,12 +42,31 @@ class Database:
           record = cursor.fetchone()
           print("You are connected to - ", record,"\n")
           
-          create_table_query = '''CREATE TABLE IF NOT EXISTS mobile
-                (ID INT PRIMARY KEY     NOT NULL,
-                MODEL           TEXT    NOT NULL,
-                PRICE         REAL); '''
+          create_table_prod_query = '''CREATE TABLE IF NOT EXISTS product
+              (ID SERIAL PRIMARY KEY,
+              PROD_NAME TEXT NOT NULL,
+              UPDATED_AT TIMESTAMP DEFAULT NOW(),
+              CREATED_AT TIMESTAMP DEFAULT NOW()
+               ); '''
+              #  PROD_TYPE TEXT
+              #  VENDOR LIST
           
-          cursor.execute(create_table_query)
+          create_table_prod_detail_query = '''CREATE TABLE IF NOT EXISTS product_details
+                (ID SERIAL PRIMARY KEY  NOT NULL,
+                PROD_ID INT NOT NULL,
+                SUB_PROD_NAME TEXT NOT NULL, 
+                STOCK_SET SMALLINT DEFAULT 2,
+                STOCK_LIVE SMALLINT, 
+                PRICE_SET REAL,
+                PRICE_LIVE REAL, 
+                UPDATED_AT TIMESTAMP DEFAULT NOW(),
+                CREATED_AT TIMESTAMP DEFAULT NOW(),
+                STOCK_STATUS BOOLEAN DEFAULT TRUE,
+                FOREIGN KEY (PROD_ID) REFERENCES product(ID) ON DELETE CASCADE); '''
+          
+          cursor.execute(create_table_prod_query)
+          cursor.execute(create_table_prod_detail_query)
+
           self.conn.commit()
           print("Table created successfully")
 

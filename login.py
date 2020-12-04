@@ -191,13 +191,15 @@ class Taobao:
                 time.sleep(random.random()*2)
                 await self.page.screenshot({'path': f"product_{prod_title}.png"})
                 #  ==> Get the stock
-                prod_stock = await self.get_elem("#J_EmStock")
-                prod_stock_text = await self.page.evaluate('''(element) => element.textContent''', prod_stock)
+                prod_stock_ele = await self.get_elem("#J_EmStock")
+                prod_stock = await self.page.evaluate('''(element) => element.textContent''', prod_stock_ele)
+                prod_stock_text = int("".join(list(prod_stock)[2:-1]))# 库存13件 --> 13 (int)
                 time.sleep(random.random()*2)
                 print("prod_stock", prod_stock_text)
                 #  ==> Get the price
-                prod_price = await self.get_elem("#J_PromoPrice > dd > div > span")
-                prod_price_text = await self.page.evaluate('''(element) => element.textContent''', prod_price)
+                prod_price_ele = await self.get_elem("#J_PromoPrice > dd > div > span")
+                prod_price = await self.page.evaluate('''(element) => element.textContent''', prod_price_ele)
+                prod_price_text = int(float(prod_price)) # 379.00 --> 379 (int)
                 time.sleep(random.random()*2)
                 print("prod_price", prod_price_text)
                 #  ==> Defaults to first option in 套餐类型

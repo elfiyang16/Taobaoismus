@@ -1,7 +1,7 @@
 import psycopg2
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cred  import db_user, db_host, db_port,db_database
+from cred import db_user, db_host, db_port,db_database
 
 class Database:
     """PostgreSQL Database class."""

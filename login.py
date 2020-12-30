@@ -4,6 +4,7 @@ import time
 import random
 from cred import USERNAME, PASSWORD
 from vendor_list import vendor_dict
+from db import db_connect
 from core import browser
 import requests
 
